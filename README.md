@@ -246,10 +246,10 @@ reboot
 
 ### 2.2. Настраиваем youtubeUnblock (через веб-интерфейс)
 
-- Выходим из веб-интерфейса (**Log out**) и входим заново - в меню **Services** появится новый пункт **youtubeUnblock**.
+- Выходим из веб-интерфейса (**Log out**) и входим заново - в меню **Services** появится новый пункт **youtubeUnblock**
 - Проверяем работу YouTube - если не заработал, то с провайдером Ростелеком помогло это:
-  - **Services** -> **youtubeUnblock** -> **Configuration** -> **Default section** -> **Edit** -> **\[ \] Fake sni** -> **Save** -> **Save & Apply**.
-- Вот и все - теперь YouTube работает без VPN.
+  - **Services** -> **youtubeUnblock** -> **Configuration** -> **Default section** -> **Edit** -> **\[ \] Fake sni** -> **Save** -> **Save & Apply**
+- Вот и все - теперь YouTube работает без VPN
 
 ***
 
