@@ -1,10 +1,32 @@
-## OpenWrt: Установка youtubeUnblock или клиента AmneziaWG
+## OpenWrt: Установка youtubeUnblock и AmneziaWG
 
-Инструкция предназначена для роутеров:
+Настраиваем связку **youtubeUnblock** + **AmneziaWG** на роутере с **OpenWrt** за 15–20 минут.
 
-- Любой MikroTik с архитектурой MIPSBE, прошитый в OpenWrt 24.10
-- Nano Pi R3S LTS c установленной OpenWrt 24.10
-- Nano Pi R3S LTS c установленной FriendlyWrt 24.10
+## Для каких роутеров
+
+- Любой **MikroTik** с архитектурой **MIPSBE**, прошитый в **OpenWrt 24.10.xx**
+- **Nano Pi R3S LTS** c установленной **OpenWrt 24.10.xx**
+- **Nano Pi R3S LTS** c установленной **FriendlyWrt 24.10.xx**
+
+## Что получим в результате
+
+Обход блокировок на уровне роутера - избавляемся от необходимости ставить **VPN** на каждое устройство.
+
+1. **YouTube-трафик** обфусцируется пакетом **youtubeUnblock** и после него идет напрямую провайдеру. Это дает минимальную задержку, максимальную скорость, и бонусом - отключает рекламу.
+2. **Трафик в остальной Интернет** уходит в **VPN**-туннель **AmneziaWG**. Бесплатные конфигурации для туннеля берем с сайта [WARP Генератор](https://warp-generation.github.io/).
+3. **Собственный трафик роутера** не идет в **VPN**-туннель. Это нужно для надежной синхронизации времени, работы **DNS** и обновлений, независимо от состояния **VPN**.
+
+## Варианты настройки
+
+Инструкцию можно выполнять целиком или частично, в зависимости от ваших задач:
+
+- Только **youtubeUnblock**: Выполните только первый раздел. **YouTube** будет работать напрямую (быстро и без рекламы), остальной трафик - как обычно.
+- Только **AmneziaWG**: Пропустите первый раздел и выполните только второй. Весь **Интернет**-трафик (включая **YouTube**) уйдет в **VPN**-туннель.
+- Связка **youtubeUnblock** + **AmneziaWG**: Выполните инструкцию полностью. **YouTube** пойдет напрямую к провайдеру, а всё остальное - через **VPN**.
+
+Любой из компонентов можно доустановить позже - скрипты автоматически адаптируются, перенастраивать ничего не придется.
+
+***
 
 ## Установка youtubeUnblock
 
@@ -54,20 +76,17 @@ uci set luci.main.lang='en'
 uci set system.@system[0].timezone='<+04>-4'
 uci set system.@system[0].zonename='Europe/Samara'
 
-### Отключаем PoE-Out на MikroTik (чтобы порт не горел красным) - добавляем команды (перед exit 0) в скрипт автозапуска
-# System -> Startup -> Local Startup:
-# sleep 2; for f in /sys/class/gpio/*poe*/value; do echo 0 >$f; done
-# exit 0
-# -> Save -> Dismiss
+### Отключаем PoE-Out на MikroTik (чтобы порт не горел красным) - добавляем скрипт в rc.local
+# System -> Startup -> Local Startup -> insert SCRIPT before 'exit 0' -> Save -> Dismiss
 grep -q 'gpio.*poe' /etc/rc.local || sed -i '/exit 0/i sleep 2; for f in /sys/class/gpio/*poe*/value; do echo 0 >$f; done' /etc/rc.local
 
 ### Разрешаем подключения на WAN-интерфейсе
-# Network -> Firewall -> Zones -> at the intersection of wan and Input, select accept -> Save & Apply
+# Network -> Firewall -> Zones -> at the intersection of 'wan' and 'Input', select 'accept' -> Save & Apply
 uci set firewall.@zone[1].input='ACCEPT'
 
 ### Отключаем IPv6
 # Удаляем IPv6-туннели и интерфейсы
-# Network -> Interfaces -> удаляем WAN6, 6in4, 6to4
+# Network -> Interfaces -> remove WAN6, 6in4, 6to4
 uci -q delete network.wan6
 uci -q delete network.6in4
 uci -q delete network.6to4
@@ -225,11 +244,11 @@ reboot
 
 Если ютуб еще не заработал, то мне (провайдер Ростелеком) помогло это: **Services** -> **youtubeUnblock** -> **Configuration** -> **Default section** -> **Edit** -> **\[ \] Fake sni** -> **Save** -> **Save & Apply**.
 
-Вот и все - теперь YouTube работает без использования VPN. И еще бонусом - в YouTube не будет рекламы.
+Вот и все - теперь YouTube работает без использования VPN.
 
 ***
 
-## Установка клиента AmneziaWG
+## Установка и настройка AmneziaWG
 
 
 ### 1. Устанавливаем клиент AmneziaWG и перезагружаемся
@@ -286,10 +305,20 @@ reboot
       download_and_install 'luci-proto-amneziawg' "${UB}/luci-proto-amneziawg_v${UV}_${UA}.ipk" ;;
     *) echo "ERROR: Unsupported architecture: $ARCH"; exit 1 ;;
   esac
-  echo 'Installation succesfull. Rebooting...'
+
+  ### Исключаем AWG-трафик из обработки youtubeUnblock - создаём hotplug-скрипт
+  # Скрипт будет автоматически срабатывать при каждом поднятии интерфейса awg0
+  # Это необходимо, так как интерфейс может быть пересоздан при импорте нового конфига
+  HOTPLUG_FILE='/etc/hotplug.d/iface/99-youtubeUnblock-skip-awg'
+  echo    >$HOTPLUG_FILE '[ "$ACTION"    = "ifup" ] || exit 3'
+  echo   >>$HOTPLUG_FILE '[ "$INTERFACE" = "awg0" ] || exit 2'
+  echo   >>$HOTPLUG_FILE 'nft list chain inet fw4 youtubeUnblock 2>/dev/null|grep -q youtubeUnblock-skip-awg && exit 1'
+  echo   >>$HOTPLUG_FILE 'nft insert rule inet fw4 youtubeUnblock oifname awg0 counter return comment youtubeUnblock-skip-awg 2>/dev/null'
+  chmod +x $HOTPLUG_FILE
 
   ### Перезагружаемся
   # System -> Reboot -> Perform reboot
+  echo 'Installation successful. Rebooting...'
   reboot
 )
 ```
@@ -372,6 +401,35 @@ reboot
   uci set network.@rule[-1].lookup='main'
   uci set network.@rule[-1].priority='10'
 
+  ### Добавляем правила с приоритетом 10: Трафик от клиентов (in='lan') в сети YouTube отправляем в таблицу main (LAN/WAN-интерфейсы)
+  # Network -> Routing -> IPv4 Rules -> Add -> Priority: 10, Incoming interface: lan, Destination: YouTube subnet -> Save -> Save & Apply
+  YOUTUBE_NETS='5.143.239.0/24 8.8.4.0/24 8.8.8.0/24 8.34.208.0/20 8.35.192.0/20 23.236.48.0/20 23.251.128.0/19 34.0.0.0/9 34.128.0.0/10
+  35.184.0.0/13 35.192.0.0/14 35.196.0.0/15 35.198.0.0/16 35.199.0.0/17 35.199.128.0/18 35.200.0.0/13 35.208.0.0/12 46.61.136.0/24
+  46.61.154.0/24 46.61.170.0/24 46.61.216.0/24 64.18.0.0/15 64.233.128.0/18 66.102.0.0/20 66.249.64.0/18 70.32.128.0/19 72.14.192.0/18
+  74.114.24.0/21 74.125.0.0/16 80.252.155.0/24 83.174.196.0/24 83.174.199.0/24 85.234.4.0/24 87.245.216.0/24 87.245.220.0/23
+  87.245.222.0/24 95.167.73.0/24 104.21.47.0/24 104.132.0.0/14 104.152.0.0/14 104.156.64.0/18 104.196.0.0/14 104.237.160.0/19
+  107.167.160.0/19 108.59.80.0/20 108.170.192.0/18 108.177.14.0/24 109.195.25.0/24 130.211.0.0/16 136.112.0.0/12 142.248.0.0/14
+  146.148.0.0/14 162.216.144.0/21 162.222.176.0/21 172.67.146.0/24 172.110.32.0/21 172.217.0.0/16 172.253.0.0/16 173.194.0.0/16
+  173.255.112.0/20 178.66.83.0/24 185.38.0.0/24 188.43.61.0/24 188.43.87.0/24 188.114.96.0/23 192.158.28.0/22 192.178.0.0/15
+  193.186.4.0/24 195.68.132.0/24 199.36.154.0/23 199.36.156.0/24 199.192.112.0/21 199.223.232.0/21 207.126.144.0/20 207.223.160.0/20
+  208.65.152.0/22 208.68.108.0/22 208.81.188.0/22 208.117.224.0/19 209.85.128.0/17 212.188.32.0/21 213.59.210.0/24 213.59.237.0/24
+  216.58.192.0/19 216.239.32.0/19 217.118.183.0/24'
+  # Перед добавлением правил: Удаление всех старых правил для подсетей YouTube
+  for net in $YOUTUBE_NETS; do
+    uci show network|grep "\.dest='$net'"|cut -d. -f2|sort -Vr|while read r; do uci -q delete network.$r; done
+  done
+  ### Проверяем, активен ли youtubeUnblock, прежде чем добавлять правила для него
+  if nft list chain inet fw4 youtubeUnblock &>/dev/null; then
+    echo "youtubeUnblock detected. Adding routing rules for YouTube..."
+    for net in $YOUTUBE_NETS; do
+      uci add network rule >/dev/null
+      uci set network.@rule[-1].in='lan'
+      uci set network.@rule[-1].dest="$net"
+      uci set network.@rule[-1].lookup='main'
+      uci set network.@rule[-1].priority='10'
+    done
+  fi
+
   ### Добавляем правило с приоритетом 20: Остальной трафик (в Интернет) от клиентов (in='lan') отправляем в таблицу 100 (AWG-туннель)
   # Network -> Routing -> IPv4 Rules -> Add -> Priority: 20, Incoming interface: lan -> Advanced Settings -> Table: 100 -> Save -> Save & Apply
   uci add network rule >/dev/null
@@ -393,23 +451,27 @@ reboot
 (
   check() { r='31m[-]'; eval "$2" &>/dev/null && r='32m[+]'; printf '\033[1;%s\033[0m %s\n' "$r" "$1"; }
   wan() { uci get network.wan.device || uci get network.wan.ifname || echo none; }
-  check "  INTERNET: Интернет доступен (ping 8.8.8.8)"                              "ping -c 1 -W 5 8.8.8.8"
-  check "   ROUTING: Пересылка между интерфейсами включена"                         "sysctl -n net.ipv4.ip_forward|grep 1"
-  check " VPN / AWG: Интерфейс AWG добавлен в зону WAN"                             "uci get firewall.@zone[1].network|grep awg0"
-  check " VPN / AWG: Параметр 'Persistent Keep Alive' включен"                      "uci get network.awg0.persistent_keepalive|grep '[1-9]'"
-  check " VPN / AWG: Конфигурация импортирована (есть peer)"                        "uci show network|grep amneziawg_awg0"
-  check " VPN / AWG: Соединение установлено (есть handshake)"                       "awg show awg0|grep handshake|grep -vi never"
-  check " DEF ROUTE: Есть маршрут по умолчанию через WAN, и он только в main"       "ip route show table all|grep 'default .* dev `wan`\>'|grep -v table"
-  check " DEF ROUTE: Есть маршрут по умолчанию через AWG, и он только в 100"        "ip route show table all|grep 'default dev awg0 table 100\>'"
-  check "ROUTE RULE: Есть правило: трафик от клиентов в 10.0.0.0/8     => main"     "ip rule show|grep br-lan|grep '10.0.0.0/8.*main'"
-  check "ROUTE RULE: Есть правило: трафик от клиентов в 172.16.0.0/12  => main"     "ip rule show|grep br-lan|grep '172.16.0.0/12.*main'"
-  check "ROUTE RULE: Есть правило: трафик от клиентов в 192.168.0.0/16 => main"     "ip rule show|grep br-lan|grep '192.168.0.0/16.*main'"
-  check "ROUTE RULE: Есть правило: трафик от клиентов в Интернет       => 100"      "ip rule show|grep br-lan|grep 'lookup 100\>'"
-  check " ROUTE GET: Проверка маршрута: трафик от клиентов в 10.0.0.0/8     => LAN" "ip route get 10.0.0.1    from 192.168.1.50 iif br-lan|grep br-lan"
-  check " ROUTE GET: Проверка маршрута: трафик от клиентов в 172.16.0.0/12  => LAN" "ip route get 172.16.0.1  from 192.168.1.50 iif br-lan|grep br-lan"
-  check " ROUTE GET: Проверка маршрута: трафик от клиентов в 192.168.0.0/16 => LAN" "ip route get 192.168.0.1 from 192.168.1.50 iif br-lan|grep br-lan"
-  check " ROUTE GET: Проверка маршрута: трафик от клиентов в Интернет       => AWG" "ip route get 8.8.8.8     from 192.168.1.50 iif br-lan|grep awg0"
-  check "  NTP SYNC: Время синхронизировано с pool.ntp.org"                         "ntpd -n -q -p pool.ntp.org"
+  check "      PING: Интернет (1.1.1.1) доступен"                               "ping -c 1 -W 5 1.1.1.1"
+  check "      PING: YouTube (8.8.8.8) доступен"                                "ping -c 1 -W 5 8.8.8.8"
+  check "   ROUTING: Пересылка между интерфейсами включена"                     "sysctl -n net.ipv4.ip_forward|grep 1"
+  check " VPN / AWG: Интерфейс AWG добавлен в зону WAN"                         "uci get firewall.@zone[1].network|grep awg0"
+  check " VPN / AWG: Параметр 'Persistent Keep Alive' включен"                  "uci get network.awg0.persistent_keepalive|grep '[1-9]'"
+  check " VPN / AWG: Конфигурация импортирована (есть peer)"                    "uci show network|grep amneziawg_awg0"
+  check " VPN / AWG: Соединение установлено (есть handshake)"                   "awg show awg0|grep handshake|grep -vi never"
+  check " VPN / AWG: Есть правило исключения AWG-трафика для youtubeUnblock"    "nft list chain inet fw4 youtubeUnblock|grep youtubeUnblock-skip-awg"
+  check " DEF ROUTE: Есть маршрут по умолчанию: через WAN, и он только в main"  "ip route show table all|grep 'default .* dev `wan`\>'|grep -v table"
+  check " DEF ROUTE: Есть маршрут по умолчанию: через AWG, и он только в 100"   "ip route show table all|grep 'default dev awg0 table 100\>'"
+  check "ROUTE RULE: Есть правило: клиенты -> LAN (10.0.0.0/8)     => main"     "ip rule show|grep br-lan|grep '10.0.0.0/8.*main'"
+  check "ROUTE RULE: Есть правило: клиенты -> LAN (172.16.0.0/12)  => main"     "ip rule show|grep br-lan|grep '172.16.0.0/12.*main'"
+  check "ROUTE RULE: Есть правило: клиенты -> LAN (192.168.0.0/16) => main"     "ip rule show|grep br-lan|grep '192.168.0.0/16.*main'"
+  check "ROUTE RULE: Есть правило: клиенты -> YouTube (8.8.8.8)    => main"     "ip rule show|grep br-lan|grep '8.8.8.0/24.*main'"
+  check "ROUTE RULE: Есть правило: клиенты -> Интернет (1.1.1.1)   => 100"      "ip rule show|grep br-lan|grep 'lookup 100\>'"
+  check " ROUTE GET: Проверка маршрута: клиенты -> LAN (10.0.0.0/8)     => LAN" "ip route get 10.0.0.1    from 192.168.1.50 iif br-lan|grep br-lan"
+  check " ROUTE GET: Проверка маршрута: клиенты -> LAN (172.16.0.0/12)  => LAN" "ip route get 172.16.0.1  from 192.168.1.50 iif br-lan|grep br-lan"
+  check " ROUTE GET: Проверка маршрута: клиенты -> LAN (192.168.0.0/16) => LAN" "ip route get 192.168.0.1 from 192.168.1.50 iif br-lan|grep br-lan"
+  check " ROUTE GET: Проверка маршрута: клиенты -> YouTube (8.8.8.8)    => WAN" "ip route get 8.8.8.8     from 192.168.1.50 iif br-lan|grep -v awg0"
+  check " ROUTE GET: Проверка маршрута: клиенты -> Интернет (1.1.1.1)   => AWG" "ip route get 1.1.1.1     from 192.168.1.50 iif br-lan|grep awg0"
+  check "  NTP SYNC: Время синхронизировано с pool.ntp.org"                     "ntpd -n -q -p pool.ntp.org"
 )
 ```
 
