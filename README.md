@@ -79,9 +79,9 @@ uci set system.@system[0].zonename='Europe/Samara'
 # System -> Startup -> Local Startup -> insert SCRIPT before 'exit 0' -> Save -> Dismiss
 grep -q 'gpio.*poe' /etc/rc.local || sed -i '/exit 0/i sleep 2; for f in /sys/class/gpio/*poe*/value; do echo 0 >$f; done' /etc/rc.local
 
-### Разрешаем подключения на WAN-интерфейсе
+### Разрешаем подключения на WAN-интерфейсе, если у него приватный IP
 # Network -> Firewall -> Zones -> at the intersection of 'wan' and 'Input', select 'accept' -> Save & Apply
-uci set firewall.@zone[1].input='ACCEPT'
+ifstatus wan|jsonfilter -e '@["ipv4-address"][0].address'|grep -Eq '^(10|172\.(1[6-9]|2[0-9]|3[0-1])|192\.168)\.' && uci set firewall.@zone[1].input='ACCEPT'
 
 ### Отключаем IPv6
 # Удаляем IPv6-туннели и интерфейсы
