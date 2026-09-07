@@ -484,9 +484,7 @@ reboot
 
 ## Ссылки
 
-- [Wiki](https://wiki.friendlyelec.com/wiki/index.php/NanoPi_R3S#Introduction)
-- [Wiki - Unbricking](https://wiki.friendlyelec.com/wiki/index.php/NanoPi_R3S#Windows_Users)
-- [Wiki - Flash Official OS to eMMC](https://wiki.friendlyelec.com/wiki/index.php/NanoPi_R3S?spm=a2ty_o01.29997173.0.0.46995171Rp4ie1#Flash_Official_OS_to_eMMC)
-- [NanoPi-R3S - free download (Google Drive)](https://drive.google.com/drive/folders/17DfzT1JBvd3PigcOa0Rr05a0VygcL1cO)
-- [4PDA](https://4pda.to/forum/index.php?showtopic=1098192&st=600)
-- [Поддержка OpenWRT для NanoPi R3S LTS](https://forum.openwrt.org/t/openwrt-support-for-nanopi-r3s-lts/237172/7)
+- [MikroTik: Прошивка OpenWrt](https://github.com/smkuzmin/mikrotik-installing-openwrt)
+- [NanoPi R3S: OpenWrt 24.10.8](https://downloads.openwrt.org/releases/24.10.8/targets/rockchip/armv8/openwrt-24.10.8-rockchip-armv8-friendlyarm_nanopi-r3s-squashfs-sysupgrade.img.gz)
+- [NanoPi R3S: Flash Official OS to eMMC](https://wiki.friendlyelec.com/wiki/index.php/NanoPi_R3S?spm=a2ty_o01.29997173.0.0.46995171Rp4ie1#Flash_Official_OS_to_eMMC)
+- [NanoPi R3S: Images & Tools](https://drive.google.com/drive/folders/17DfzT1JBvd3PigcOa0Rr05a0VygcL1cO)
