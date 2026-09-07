@@ -287,17 +287,17 @@ reboot
   ARCH=$(opkg print-architecture|awk 'END{print $2}')
   KERNEL=$(uname -r|cut -d. -f1,2)
   case "$ARCH" in
-    mips_24kc)  # MikroTik на платформе MIPSBE (OpenWrt)
+    mips_24kc)  # MikroTik с архитектурой MIPSBE на OpenWrt 24.10
       V='24.10.8'; B="https://github.com/Slava-Shchipunov/awg-openwrt/releases/download/v${V}"; A='mips_24kc_ath79_mikrotik'
       download_and_install 'kmod-amneziawg'       "${B}/kmod-amneziawg_v${V}_${A}.ipk"
       download_and_install 'amneziawg-tools'      "${B}/amneziawg-tools_v${V}_${A}.ipk"
       download_and_install 'luci-proto-amneziawg' "${B}/luci-proto-amneziawg_v${V}_${A}.ipk" ;;
-    aarch64_generic)  # NanoPi R3S LTS (OpenWrt)
+    aarch64_generic)  # NanoPi R3S LTS на OpenWrt 24.10
       V='24.10.8'; B="https://github.com/Slava-Shchipunov/awg-openwrt/releases/download/v${V}"; A='aarch64_generic_rockchip_armv8'
       download_and_install 'kmod-amneziawg'       "${B}/kmod-amneziawg_v${V}_${A}.ipk"
       download_and_install 'amneziawg-tools'      "${B}/amneziawg-tools_v${V}_${A}.ipk"
       download_and_install 'luci-proto-amneziawg' "${B}/luci-proto-amneziawg_v${V}_${A}.ipk" ;;
-    aarch64_cortex-a53)  # NanoPi R3S LTS (FriendlyWrt)
+    aarch64_cortex-a53)  # NanoPi R3S LTS на FriendlyWrt 24.10
       case "$KERNEL" in
         '6.1') KV='1.0.20260611'; KB="https://github.com/lastharbor/kmod-amneziawg-nanopi-r5c/releases/download/v${KV}-r1" ;;
         '6.6') KV='3.1.20260812'; KB="https://github.com/lastharbor/kmod-amneziawg-nanopi-r5c/releases/download/v${KV}"    ;;
