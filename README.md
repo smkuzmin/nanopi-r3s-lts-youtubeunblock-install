@@ -2,13 +2,12 @@
 
 Настраиваем связку **youtubeUnblock** + **AmneziaWG** на роутере с **OpenWrt** за 15–20 минут.
 
-## Для каких роутеров
+## Поддерживаемые устройства
 
-- Любой **MikroTik** с архитектурой **MIPSBE**, прошитый в **OpenWrt 24.10.xx**
-- **Nano Pi R3S LTS** c установленной **OpenWrt 24.10.xx**
-- **Nano Pi R3S LTS** c установленной **FriendlyWrt 24.10.xx**
+- **MikroTik** с архитектурой [MIPSBE](https://mikrotik.com/products/matrix) на **OpenWrt 24.10**
+- **Nano Pi R3S LTS** на **OpenWrt 24.10** или **FriendlyWrt 24.10**
 
-## Что получим в результате
+## Что получаем
 
 Обход блокировок на уровне роутера - избавляемся от необходимости ставить **VPN** на каждое устройство.
 
