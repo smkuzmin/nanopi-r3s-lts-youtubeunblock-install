@@ -4,16 +4,27 @@
 
 ## Поддерживаемые устройства
 
-- **MikroTik** с архитектурой [MIPSBE](https://mikrotik.com/products/matrix) на **OpenWrt 24.10**
-- **Nano Pi R3S LTS** на **OpenWrt 24.10** или **FriendlyWrt 24.10**
+- **MikroTik** с архитектурой [MIPSBE](https://mikrotik.com/products/matrix) на **OpenWrt 24.10**:
+  - [RB951G-2HnD](https://mikrotik.wiki/wiki/MikroTik_RB951G-2HnD)
+  - [RB951Ui-2HnD](https://mikrotik.wiki/wiki/MikroTik_RB951Ui-2HnD)
+  - [RB952Ui-5ac2nD (hAP ac lite)](https://mikrotik.wiki/wiki/MikroTik_hAP_ac_lite_(RB952Ui-5ac2nD))
+  - [RB2011UiAS-2HnD-IN](https://mikrotik.wiki/wiki/MikroTik_RB2011UiAS-2HnD-IN)
+  - [RB2011UiAS-IN](https://mikrotik.wiki/wiki/MikroTik_RB2011UiAS-IN)
+  - [RB2011iL-IN](https://mikrotik.wiki/wiki/MikroTik_RB2011iL-IN)
+  - [RB2011iL-RM](https://mikrotik.wiki/wiki/MikroTik_RB2011iL-RM)
+  - [RBwAPG-5HacT2HnD (wAP ac)](https://mikrotik.wiki/wiki/WAP_ac_BE_(RBwAPG-5HacT2HnD-BE))
+  - [RBwAPG-5HacT2HnD-BE (wAP ac BE)](https://mikrotik.wiki/wiki/WAP_ac_BE_(RBwAPG-5HacT2HnD-BE))
+  - [RB912UAG-2HPnD-OUT (BaseBox 2)](https://mikrotik.wiki/wiki/MikroTik_BaseBox_2_(RB912UAG-2HPnD-OUT))
+  - [RB912UAG-5HPnD-OUT (BaseBox 5)](https://mikrotik.wiki/wiki/MikroTik_BaseBox_5_(RB912UAG-5HPnD-OUT))
+  - [RB911G-5HPacD-NB (NetBox 5)](https://mikrotik.wiki/wiki/MikroTik_NetBox_5_(RB911G-5HPacD-NB))
+- **Nano Pi R3S** на **OpenWrt 24.10** или **FriendlyWrt 24.10**
 
-## Что получаем
+## Что получим в результате
 
-Обход блокировок на уровне роутера - избавляемся от необходимости ставить **VPN** на каждое устройство.
-
-1. **YouTube-трафик** обфусцируется пакетом **youtubeUnblock** и после него идет напрямую провайдеру. Это дает минимальную задержку, максимальную скорость, и бонусом - отключает рекламу.
-2. **Трафик в остальной Интернет** уходит в **VPN**-туннель **AmneziaWG**. Бесплатные конфигурации для туннеля берем с сайта [WARP Генератор](https://warp-generation.github.io/).
-3. **Собственный трафик роутера** не идет в **VPN**-туннель. Это нужно для надежной синхронизации времени, работы **DNS** и обновлений, независимо от состояния **VPN**.
+- Обход блокировок на уровне роутера - избавляемся от необходимости ставить **VPN** на каждое устройство.
+- **YouTube-трафик** обфусцируется пакетом **youtubeUnblock** и после него идет напрямую провайдеру. Это дает минимальную задержку, максимальную скорость, и бонусом - отключает рекламу.
+- **Трафик в остальной Интернет** уходит в **VPN**-туннель **AmneziaWG**. Бесплатные конфигурации для **VPN** берем с сайта [WARP Генератор](https://warp-generation.github.io/).
+- **Собственный трафик роутера** не идет в **VPN**-туннель. Это нужно для надежной синхронизации времени, работы **DNS** и обновлений, независимо от состояния **VPN**.
 
 ## Варианты настройки
 
@@ -22,8 +33,6 @@
 - Только **youtubeUnblock** (разделы **1**, **2**): **YouTube** будет работать напрямую (быстро и без рекламы), остальной трафик - как обычно.
 - Только **AmneziaWG** (разделы **1**, **3**, **4**): Весь **Интернет**-трафик (включая **YouTube**) уйдет в **VPN**-туннель.
 - **youtubeUnblock** + **AmneziaWG** (все разделы): **YouTube** пойдет напрямую к провайдеру, а всё остальное - через **VPN**.
-
-Любой из компонентов можно доустановить позже - скрипты автоматически адаптируются, перенастраивать ничего не придется.
 
 ***
 
@@ -292,12 +301,12 @@ reboot
       download_and_install 'kmod-amneziawg'       "${B}/kmod-amneziawg_v${V}_${A}.ipk"
       download_and_install 'amneziawg-tools'      "${B}/amneziawg-tools_v${V}_${A}.ipk"
       download_and_install 'luci-proto-amneziawg' "${B}/luci-proto-amneziawg_v${V}_${A}.ipk" ;;
-    aarch64_generic)  # NanoPi R3S LTS на OpenWrt 24.10
+    aarch64_generic)  # NanoPi R3S на OpenWrt 24.10
       V='24.10.8'; B="https://github.com/Slava-Shchipunov/awg-openwrt/releases/download/v${V}"; A='aarch64_generic_rockchip_armv8'
       download_and_install 'kmod-amneziawg'       "${B}/kmod-amneziawg_v${V}_${A}.ipk"
       download_and_install 'amneziawg-tools'      "${B}/amneziawg-tools_v${V}_${A}.ipk"
       download_and_install 'luci-proto-amneziawg' "${B}/luci-proto-amneziawg_v${V}_${A}.ipk" ;;
-    aarch64_cortex-a53)  # NanoPi R3S LTS на FriendlyWrt 24.10
+    aarch64_cortex-a53)  # NanoPi R3S на FriendlyWrt 24.10
       case "$KERNEL" in
         '6.1') KV='1.0.20260611'; KB="https://github.com/lastharbor/kmod-amneziawg-nanopi-r5c/releases/download/v${KV}-r1" ;;
         '6.6') KV='3.1.20260812'; KB="https://github.com/lastharbor/kmod-amneziawg-nanopi-r5c/releases/download/v${KV}"    ;;
