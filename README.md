@@ -1,6 +1,6 @@
 ## OpenWrt: Установка youtubeUnblock и AmneziaWG
 
-Настраиваем связку **youtubeUnblock** + **AmneziaWG** на роутере с **OpenWrt** за 15-20 минут.
+Настраиваем связку **youtubeUnblock** + **AmneziaWG** на роутере с **OpenWrt** за 20 минут.
 
 ## Поддерживаемые устройства
 
